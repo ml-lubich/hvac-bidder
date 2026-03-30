@@ -135,7 +135,7 @@ export function generateMockBid(input: {
         description: mat.description,
         quantity: mat.qty,
         unit_price: price,
-        total: price * mat.qty,
+        total: Math.round(price * mat.qty),
       })
     })
   })
@@ -145,15 +145,16 @@ export function generateMockBid(input: {
     const labor = laborRates[service] || laborRates['repair']
     const hours = Math.round(labor.hours * commercialMult * sizeMult * 10) / 10
     const rate = Math.round(labor.rate * commercialMult)
+    const laborCost = Math.round(hours * rate)
     totalLaborHours += hours
-    totalLabor += hours * rate
+    totalLabor += laborCost
     lineItems.push({
       id: generateLineItemId(),
       category: 'labor',
       description: `${service.charAt(0).toUpperCase() + service.slice(1)} Labor (${hours} hrs @ $${rate}/hr)`,
       quantity: 1,
-      unit_price: hours * rate,
-      total: hours * rate,
+      unit_price: laborCost,
+      total: laborCost,
     })
   })
 

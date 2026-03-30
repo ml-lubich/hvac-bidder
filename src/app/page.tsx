@@ -370,7 +370,7 @@ function Pricing() {
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 hover:border-gray-700 transition-all">
             <h3 className="text-lg font-semibold text-gray-300 mb-1">Pro</h3>
             <div className="flex items-baseline gap-1 mb-1">
-              <span className="text-4xl font-bold">$49</span>
+              <span className="text-4xl font-bold">$19</span>
               <span className="text-gray-500">/mo</span>
             </div>
             <p className="text-sm text-gray-500 mb-6">
@@ -410,7 +410,7 @@ function Pricing() {
               Business
             </h3>
             <div className="flex items-baseline gap-1 mb-1">
-              <span className="text-4xl font-bold">$99</span>
+              <span className="text-4xl font-bold">$49</span>
               <span className="text-gray-500">/mo</span>
             </div>
             <p className="text-sm text-gray-500 mb-6">
