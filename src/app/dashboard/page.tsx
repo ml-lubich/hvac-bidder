@@ -15,7 +15,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAuth } from "@/lib/use-auth";
-import { listBids, deleteBid } from "@/lib/db";
+import { listBids, deleteBid, updateBidStatus } from "@/lib/db";
 import type { Bid } from "@/lib/supabase";
 
 function StatCard({
@@ -80,6 +80,12 @@ export default function DashboardPage() {
   const handleDelete = async (bidId: string) => {
     await deleteBid(bidId);
     setBids((prev) => prev.filter((b) => b.id !== bidId));
+    setOpenMenu(null);
+  };
+
+  const handleStatusChange = async (bidId: string, status: Bid["status"]) => {
+    await updateBidStatus(bidId, status);
+    setBids((prev) => prev.map((b) => b.id === bidId ? { ...b, status } : b));
     setOpenMenu(null);
   };
 
@@ -268,7 +274,31 @@ export default function DashboardPage() {
                           <MoreVertical className="w-4 h-4" />
                         </button>
                         {openMenu === bid.id && (
-                          <div className="absolute right-0 top-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-10 py-1 min-w-[140px]">
+                          <div className="absolute right-0 top-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-10 py-1 min-w-[160px]">
+                            {bid.status === "draft" && (
+                              <button
+                                onClick={() => handleStatusChange(bid.id, "sent")}
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-blue-400 hover:bg-gray-700 transition-colors"
+                              >
+                                Mark as Sent
+                              </button>
+                            )}
+                            {bid.status === "sent" && (
+                              <>
+                                <button
+                                  onClick={() => handleStatusChange(bid.id, "accepted")}
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-green-400 hover:bg-gray-700 transition-colors"
+                                >
+                                  Mark Accepted
+                                </button>
+                                <button
+                                  onClick={() => handleStatusChange(bid.id, "declined")}
+                                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-400 hover:bg-gray-700 transition-colors"
+                                >
+                                  Mark Declined
+                                </button>
+                              </>
+                            )}
                             <button
                               onClick={() => handleDelete(bid.id)}
                               className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-gray-700 transition-colors"

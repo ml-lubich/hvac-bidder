@@ -42,11 +42,11 @@ export default function BidDetailPage({
     }).catch(() => setLoading(false));
   }, [id, user]);
 
-  const handleMarkSent = async () => {
+  const handleStatusChange = async (status: Bid["status"]) => {
     if (!bid) return;
     setSendingStatus(true);
-    await updateBidStatus(bid.id, "sent");
-    setBid({ ...bid, status: "sent" });
+    await updateBidStatus(bid.id, status);
+    setBid({ ...bid, status });
     setSendingStatus(false);
   };
 
@@ -119,7 +119,7 @@ export default function BidDetailPage({
           </button>
           {bid.status === "draft" && (
             <button
-              onClick={handleMarkSent}
+              onClick={() => handleStatusChange("sent")}
               disabled={sendingStatus}
               className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-50"
             >
@@ -130,6 +130,25 @@ export default function BidDetailPage({
               )}
               Mark as Sent
             </button>
+          )}
+          {bid.status === "sent" && (
+            <>
+              <button
+                onClick={() => handleStatusChange("accepted")}
+                disabled={sendingStatus}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                Accepted
+              </button>
+              <button
+                onClick={() => handleStatusChange("declined")}
+                disabled={sendingStatus}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 border border-gray-700 text-gray-300 hover:text-white rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                Declined
+              </button>
+            </>
           )}
         </div>
       </div>

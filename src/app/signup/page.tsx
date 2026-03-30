@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Wrench, Eye, EyeOff, CheckCircle2 } from "lucide-react";
-import { signUp } from "@/lib/db";
+import { signUp, ensureProfile } from "@/lib/db";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
 
-    const { error: authError } = await signUp(email, password, {
+    const { data, error: authError } = await signUp(email, password, {
       full_name: name,
       company_name: companyName,
     });
@@ -30,6 +30,13 @@ export default function SignupPage() {
       setError(authError.message);
       setLoading(false);
     } else {
+      try {
+        if (data.user) {
+          await ensureProfile(data.user.id, { full_name: name, company_name: companyName });
+        }
+      } catch {
+        // Profile creation is best-effort; dashboard will retry
+      }
       router.push("/dashboard");
     }
   };

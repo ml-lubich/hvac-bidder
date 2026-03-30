@@ -40,8 +40,29 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 export async function updateProfile(userId: string, updates: Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>) {
   const { data, error } = await sb()
     .from('profiles')
-    .update(updates)
-    .eq('id', userId)
+    .upsert({ id: userId, ...updates, updated_at: new Date().toISOString() })
+    .select()
+    .single()
+  if (error) throw error
+  return data as Profile
+}
+
+export async function ensureProfile(userId: string, meta?: { full_name?: string; company_name?: string }) {
+  const existing = await getProfile(userId)
+  if (existing) return existing
+  const { data, error } = await sb()
+    .from('profiles')
+    .insert({
+      id: userId,
+      full_name: meta?.full_name || '',
+      company_name: meta?.company_name || '',
+      company_phone: '',
+      company_email: '',
+      company_license: '',
+      company_address: '',
+      default_terms: 'Payment due within 30 days of project completion. 1-year warranty on all labor. Equipment warranty per manufacturer terms. Price valid for 30 days from bid date.',
+      plan: 'free',
+    })
     .select()
     .single()
   if (error) throw error

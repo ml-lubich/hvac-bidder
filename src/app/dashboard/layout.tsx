@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -14,7 +14,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAuth } from "@/lib/use-auth";
-import { signOut } from "@/lib/db";
+import { signOut, ensureProfile } from "@/lib/db";
 
 export default function DashboardLayout({
   children,
@@ -44,6 +44,18 @@ export default function DashboardLayout({
       </div>
     );
   }
+
+  // Ensure profile exists on first dashboard visit
+  const profileEnsured = useRef(false);
+  useEffect(() => {
+    if (user && !profileEnsured.current) {
+      profileEnsured.current = true;
+      ensureProfile(user.id, {
+        full_name: user.user_metadata?.full_name,
+        company_name: user.user_metadata?.company_name,
+      }).catch(() => {});
+    }
+  }, [user]);
 
   if (!user) return null;
 
