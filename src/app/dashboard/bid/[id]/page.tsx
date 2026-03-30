@@ -2,12 +2,10 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   ArrowLeft,
   Download,
   Send,
-  Edit3,
   Printer,
   Wrench,
   CheckCircle2,
@@ -17,8 +15,10 @@ import {
   Mail,
   Calendar,
   Clock,
+  Loader2,
 } from "lucide-react";
-import { sampleBids, generateMockBid } from "@/lib/mock-data";
+import { useAuth } from "@/lib/use-auth";
+import { getBid, updateBidStatus } from "@/lib/db";
 import type { Bid } from "@/lib/supabase";
 
 export default function BidDetailPage({
@@ -28,40 +28,46 @@ export default function BidDetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const { user } = useAuth({ redirectTo: "/login" });
   const [bid, setBid] = useState<Bid | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"preview" | "details">("preview");
+  const [sendingStatus, setSendingStatus] = useState(false);
 
   useEffect(() => {
-    // Check localStorage first, then sample data
-    const stored = JSON.parse(localStorage.getItem("hvac-bids") || "[]") as Bid[];
-    const found = stored.find((b) => b.id === id) || sampleBids.find((b) => b.id === id);
+    if (!user) return;
+    getBid(id, user.id).then((data) => {
+      setBid(data);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [id, user]);
 
-    if (found) {
-      // If sample bid without line items, generate them
-      if (found.line_items.length === 0) {
-        const generated = generateMockBid({
-          clientName: found.client_name,
-          clientAddress: found.client_address,
-          clientPhone: found.client_phone,
-          clientEmail: found.client_email,
-          jobType: found.job_type,
-          serviceTypes: found.service_type,
-          systemType: found.system_type,
-          squareFootage: found.square_footage,
-          location: found.location,
-          notes: found.notes,
-        });
-        found.line_items = generated.line_items;
-        found.total_amount = generated.total_amount;
-      }
-      setBid(found);
-    }
-  }, [id]);
+  const handleMarkSent = async () => {
+    if (!bid) return;
+    setSendingStatus(true);
+    await updateBidStatus(bid.id, "sent");
+    setBid({ ...bid, status: "sent" });
+    setSendingStatus(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-5xl mx-auto flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+      </div>
+    );
+  }
 
   if (!bid) {
     return (
       <div className="max-w-4xl mx-auto text-center py-20">
-        <p className="text-gray-400">Loading bid...</p>
+        <p className="text-gray-400">Bid not found.</p>
+        <button
+          onClick={() => router.push("/dashboard")}
+          className="mt-4 text-orange-400 hover:text-orange-300 text-sm"
+        >
+          Back to Dashboard
+        </button>
       </div>
     );
   }
@@ -108,10 +114,20 @@ export default function BidDetailPage({
             <Download className="w-4 h-4" />
             Export PDF
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:shadow-orange-500/25">
-            <Send className="w-4 h-4" />
-            Send to Client
-          </button>
+          {bid.status === "draft" && (
+            <button
+              onClick={handleMarkSent}
+              disabled={sendingStatus}
+              className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:shadow-orange-500/25 disabled:opacity-50"
+            >
+              {sendingStatus ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+              Mark as Sent
+            </button>
+          )}
         </div>
       </div>
 
@@ -154,7 +170,9 @@ export default function BidDetailPage({
                     {bid.company_name || "Your Company Name"}
                   </h2>
                   <p className="text-gray-400 text-sm">
-                    Licensed HVAC Contractor
+                    {bid.company_license
+                      ? `License #${bid.company_license}`
+                      : "Licensed HVAC Contractor"}
                   </p>
                 </div>
               </div>

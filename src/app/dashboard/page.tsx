@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -11,8 +11,11 @@ import {
   Search,
   MoreVertical,
   Eye,
+  Trash2,
+  Loader2,
 } from "lucide-react";
-import { sampleBids } from "@/lib/mock-data";
+import { useAuth } from "@/lib/use-auth";
+import { listBids, deleteBid } from "@/lib/db";
 import type { Bid } from "@/lib/supabase";
 
 function StatCard({
@@ -59,19 +62,26 @@ function StatusBadge({ status }: { status: Bid["status"] }) {
 }
 
 export default function DashboardPage() {
-  const [bids] = useState<Bid[]>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("hvac-bids");
-      if (stored) {
-        const parsed = JSON.parse(stored) as Bid[];
-        return [...parsed, ...sampleBids];
-      }
-    }
-    return sampleBids;
-  });
-
+  const { user } = useAuth({ redirectTo: "/login" });
+  const [bids, setBids] = useState<Bid[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    listBids(user.id).then((data) => {
+      setBids(data);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [user]);
+
+  const handleDelete = async (bidId: string) => {
+    await deleteBid(bidId);
+    setBids((prev) => prev.filter((b) => b.id !== bidId));
+    setOpenMenu(null);
+  };
 
   const filteredBids = bids.filter((bid) => {
     const matchesSearch =
@@ -85,6 +95,14 @@ export default function DashboardPage() {
   const totalRevenue = bids
     .filter((b) => b.status === "accepted")
     .reduce((sum, b) => sum + b.total_amount, 0);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto animate-fade-in">
@@ -198,7 +216,9 @@ export default function DashboardPage() {
                     colSpan={6}
                     className="px-6 py-12 text-center text-gray-500"
                   >
-                    No bids found. Create your first bid to get started.
+                    {bids.length === 0
+                      ? "No bids yet. Create your first bid to get started!"
+                      : "No bids match your search."}
                   </td>
                 </tr>
               ) : (
@@ -234,16 +254,30 @@ export default function DashboardPage() {
                       <StatusBadge status={bid.status} />
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-2 relative">
                         <Link
                           href={`/dashboard/bid/${bid.id}`}
                           className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800 transition-colors"
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
-                        <button className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800 transition-colors">
+                        <button
+                          onClick={() => setOpenMenu(openMenu === bid.id ? null : bid.id)}
+                          className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800 transition-colors"
+                        >
                           <MoreVertical className="w-4 h-4" />
                         </button>
+                        {openMenu === bid.id && (
+                          <div className="absolute right-0 top-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-10 py-1 min-w-[140px]">
+                            <button
+                              onClick={() => handleDelete(bid.id)}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-gray-700 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Delete Bid
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>

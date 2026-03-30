@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Wrench,
   LayoutDashboard,
@@ -11,7 +11,10 @@ import {
   LogOut,
   Menu,
   X,
+  Loader2,
 } from "lucide-react";
+import { useAuth } from "@/lib/use-auth";
+import { signOut } from "@/lib/db";
 
 export default function DashboardLayout({
   children,
@@ -19,6 +22,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading } = useAuth({ redirectTo: "/login" });
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navItems = [
@@ -26,6 +31,23 @@ export default function DashboardLayout({
     { href: "/dashboard/new-bid", label: "New Bid", icon: Plus },
     { href: "/dashboard/settings", label: "Settings", icon: Settings },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/");
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  const initial = user.user_metadata?.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || "U";
 
   return (
     <div className="min-h-screen flex">
@@ -95,24 +117,18 @@ export default function DashboardLayout({
         </nav>
 
         <div className="p-4 border-t border-gray-800">
-          <Link
-            href="/"
-            onClick={() => {
-              if (typeof window !== "undefined") {
-                localStorage.removeItem("hvac-session");
-              }
-            }}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-colors w-full"
           >
             <LogOut className="w-5 h-5" />
             Sign Out
-          </Link>
+          </button>
         </div>
       </aside>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-h-screen">
-        {/* Top bar */}
         <header className="h-16 border-b border-gray-800 flex items-center justify-between px-4 lg:px-8 bg-gray-950/50">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -122,8 +138,11 @@ export default function DashboardLayout({
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-400 hidden sm:block">
+              {user.email}
+            </span>
             <div className="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center text-orange-400 text-sm font-bold">
-              U
+              {initial}
             </div>
           </div>
         </header>

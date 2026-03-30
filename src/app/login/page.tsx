@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Wrench, Eye, EyeOff } from "lucide-react";
+import { signIn } from "@/lib/db";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,25 +19,18 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    // Mock auth — simulate a short delay then redirect
-    await new Promise((r) => setTimeout(r, 800));
+    const { error: authError } = await signIn(email, password);
 
-    if (email && password) {
-      // Store mock session
-      localStorage.setItem(
-        "hvac-session",
-        JSON.stringify({ email, name: email.split("@")[0] })
-      );
-      router.push("/dashboard");
-    } else {
-      setError("Please enter your email and password.");
+    if (authError) {
+      setError(authError.message);
       setLoading(false);
+    } else {
+      router.push("/dashboard");
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      {/* Background glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-orange-500/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-md relative">
@@ -91,12 +85,6 @@ export default function LoginPage() {
               >
                 Password
               </label>
-              <a
-                href="#"
-                className="text-xs text-orange-400 hover:text-orange-300"
-              >
-                Forgot password?
-              </a>
             </div>
             <div className="relative">
               <input

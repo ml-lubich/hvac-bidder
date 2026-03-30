@@ -14,6 +14,8 @@ import {
   Zap,
   Loader2,
 } from "lucide-react";
+import { useAuth } from "@/lib/use-auth";
+import { createBid, getProfile } from "@/lib/db";
 import { generateMockBid } from "@/lib/mock-data";
 
 type Step = 1 | 2 | 3;
@@ -56,8 +58,10 @@ const serviceOptions = [
 
 export default function NewBidPage() {
   const router = useRouter();
+  const { user } = useAuth({ redirectTo: "/login" });
   const [step, setStep] = useState<Step>(1);
   const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState("");
 
   // Form state
   const [clientName, setClientName] = useState("");
@@ -88,30 +92,43 @@ export default function NewBidPage() {
   };
 
   const handleGenerate = async () => {
+    if (!user) return;
     setGenerating(true);
+    setError("");
 
-    // Simulate AI generation delay
-    await new Promise((r) => setTimeout(r, 2000));
+    try {
+      // Load profile for company info
+      const profile = await getProfile(user.id);
 
-    const bid = generateMockBid({
-      clientName,
-      clientAddress,
-      clientPhone,
-      clientEmail,
-      jobType,
-      serviceTypes,
-      systemType,
-      squareFootage: parseInt(squareFootage) || 1500,
-      location,
-      notes,
-    });
+      const bid = generateMockBid({
+        clientName,
+        clientAddress,
+        clientPhone,
+        clientEmail,
+        jobType,
+        serviceTypes,
+        systemType,
+        squareFootage: parseInt(squareFootage) || 1500,
+        location,
+        notes,
+      });
 
-    // Store in localStorage
-    const existing = JSON.parse(localStorage.getItem("hvac-bids") || "[]");
-    existing.unshift(bid);
-    localStorage.setItem("hvac-bids", JSON.stringify(existing));
+      // Attach user and company info
+      bid.user_id = user.id;
+      if (profile) {
+        bid.company_name = profile.company_name;
+        bid.company_phone = profile.company_phone;
+        bid.company_email = profile.company_email;
+        bid.company_license = profile.company_license;
+        if (profile.default_terms) bid.terms = profile.default_terms;
+      }
 
-    router.push(`/dashboard/bid/${bid.id}`);
+      await createBid(bid);
+      router.push(`/dashboard/bid/${bid.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create bid");
+      setGenerating(false);
+    }
   };
 
   return (
@@ -133,6 +150,12 @@ export default function NewBidPage() {
           {step === 3 && "Review and generate your bid"}
         </p>
       </div>
+
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg px-4 py-3 mb-6">
+          {error}
+        </div>
+      )}
 
       {/* Progress */}
       <div className="flex items-center gap-3 mb-8">

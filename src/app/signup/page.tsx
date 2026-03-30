@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Wrench, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { signUp } from "@/lib/db";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -20,17 +21,16 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
 
-    await new Promise((r) => setTimeout(r, 800));
+    const { error: authError } = await signUp(email, password, {
+      full_name: name,
+      company_name: companyName,
+    });
 
-    if (email && password && name) {
-      localStorage.setItem(
-        "hvac-session",
-        JSON.stringify({ email, name, companyName })
-      );
-      router.push("/dashboard");
-    } else {
-      setError("Please fill in all required fields.");
+    if (authError) {
+      setError(authError.message);
       setLoading(false);
+    } else {
+      router.push("/dashboard");
     }
   };
 
