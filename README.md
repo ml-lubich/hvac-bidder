@@ -34,7 +34,39 @@ flowchart LR
 
 - [Stack](#stack)
 - [Architecture](#architecture)
+- [Bid build (algorithm)](#bid-build-algorithm)
+- [Bid lifecycle (state)](#bid-lifecycle-state)
 - [Getting Started](#getting-started)
+
+## Bid build (algorithm)
+
+```mermaid
+flowchart LR
+    A([/bid/new])
+    B["collect job inputs<br/>scope · tonnage · site"]
+    C["materials lookup<br/>SKU prices"]
+    D["labor estimate<br/>crew × hours"]
+    E["overhead %"]
+    F["profit margin %"]
+    G["total = mat + labor + OH + profit"]
+    H["render bid PDF"]
+    I["insert /bid row"]
+    Z([/bid/[id]])
+    A --> B --> C --> D --> E --> F --> G --> H --> I --> Z
+```
+
+## Bid lifecycle (state)
+
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT
+    DRAFT --> SENT: email PDF to client
+    SENT --> WON: client accepts
+    SENT --> LOST: client declines / no reply
+    WON --> SCHEDULED: install booked
+    SCHEDULED --> [*]
+    LOST --> [*]
+```
 
 ## Stack
 
