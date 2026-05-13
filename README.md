@@ -37,6 +37,7 @@ flowchart LR
 - [Bid build (algorithm)](#bid-build-algorithm)
 - [Bid lifecycle (state)](#bid-lifecycle-state)
 - [Getting Started](#getting-started)
+- [🗺️ Repository map](#️-repository-map)
 
 ## Bid build (algorithm)
 
@@ -93,3 +94,29 @@ bun run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+
+## 🗺️ Repository map
+
+Top-level layout of `hvac-bidder` rendered as a Mermaid mindmap (auto-generated from the on-disk tree).
+
+```mermaid
+mindmap
+  root((hvac-bidder))
+    public/
+      file.svg
+      globe.svg
+      next.svg
+      vercel.svg
+      window.svg
+    src/
+      app
+      lib
+    supabase/
+      migrations
+    files
+      README.md
+      next.config.ts
+      package.json
+      tsconfig.json
+```
