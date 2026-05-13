@@ -42,7 +42,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    A([/bid/new])
+    A(["/bid/new"])
     B["collect job inputs<br/>scope · tonnage · site"]
     C["materials lookup<br/>SKU prices"]
     D["labor estimate<br/>crew × hours"]
@@ -51,7 +51,7 @@ flowchart LR
     G["total = mat + labor + OH + profit"]
     H["render bid PDF"]
     I["insert /bid row"]
-    Z([/bid/[id]])
+    Z(["/bid/(id)"])
     A --> B --> C --> D --> E --> F --> G --> H --> I --> Z
 ```
 
