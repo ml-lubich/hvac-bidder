@@ -38,6 +38,7 @@ flowchart LR
 - [Bid lifecycle (state)](#bid-lifecycle-state)
 - [Getting Started](#getting-started)
 - [🗺️ Repository map](#️-repository-map)
+- [📊 Code composition](#-code-composition)
 
 ## Bid build (algorithm)
 
@@ -119,4 +120,21 @@ mindmap
       next.config.ts
       package.json
       tsconfig.json
+```
+
+
+## 📊 Code composition
+
+File-type breakdown of source under this repo (skips `.git`, `node_modules`, build caches, lockfiles).
+
+```mermaid
+pie showData title File-type composition of hvac-bidder (38 files)
+    "TypeScript" : 15
+    "Other" : 9
+    "SVG image" : 5
+    "Markdown" : 3
+    "JavaScript" : 2
+    "JSON" : 2
+    "SQL" : 1
+    "Image" : 1
 ```
